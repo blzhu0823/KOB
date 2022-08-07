@@ -1,4 +1,5 @@
 import { GameObject } from "./GameObject";
+import { Snake } from "./Snake";
 import { Wall } from "./Wall"
 
 export class GameMap extends GameObject {
@@ -8,8 +9,8 @@ export class GameMap extends GameObject {
         this.ctx = ctx;
         this.parent = parent;
         this.L = 0;
-        this.rows = 30;
-        this.cols = 30;
+        this.rows = 25;
+        this.cols = 40;
         this.color_light = "#AAD751";
         this.color_dark = "#A2D149";
 
@@ -21,7 +22,29 @@ export class GameMap extends GameObject {
             }
         }
         this.walls = [];
-        this.inner_walls_count = 300;
+        this.inner_walls_count = 80;
+
+        this.snakes = [
+            new Snake({ id: 0, color: "#4876EC", r: this.rows - 2, c: 1 }, this),
+            new Snake({ id: 1, color: "#F94848", r: 1, c: this.cols - 2 }, this)
+        ];
+    }
+
+    add_listening_event() {
+        this.ctx.canvas.focus();
+
+        const [snake0, snake1] = this.snakes;
+        this.ctx.canvas.addEventListener("keydown", e => {
+            if (e.key === 'w') snake0.set_direction(0);
+            else if (e.key === 'd') snake0.set_direction(1);
+            else if (e.key === 's') snake0.set_direction(2);
+            else if (e.key === 'a') snake0.set_direction(3);
+            else if (e.key === 'ArrowUp') snake1.set_direction(0);
+            else if (e.key === 'ArrowRight') snake1.set_direction(1);
+            else if (e.key === 'ArrowDown') snake1.set_direction(2);
+            else if (e.key === 'ArrowLeft') snake1.set_direction(3);
+            console.log(e);
+        });
     }
 
     start() {
@@ -38,6 +61,28 @@ export class GameMap extends GameObject {
                 }
             }
         }
+
+        this.add_listening_event();
+    }
+
+    check_valid(next_cell) {
+        for (const wall of this.walls) {
+            if (wall.r === next_cell.r && wall.c === next_cell.c) {
+                return false;
+            }
+        }
+
+        for (const snake of this.snakes) {
+            let k = snake.cells.length;
+            if (!snake.check_tail_increasing()) k--;
+            for (let i = 0; i < k; i++) {
+                if (snake.cells[i].r === next_cell.r && snake.cells[i].c === next_cell.c) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     check_connectivity(sx, sy, tx, ty, g) {
@@ -80,16 +125,16 @@ export class GameMap extends GameObject {
             for (let j = 0; j < 1000; j++) {
                 let r = Math.floor(Math.random() * this.rows);
                 let c = Math.floor(Math.random() * this.cols);
-                if (this.g[r][c] || this.g[c][r])
-                    continue;
                 // left down and right up can not be walls
                 if ((r == this.rows - 2 && c == 1) || (r == 1 && c == this.cols - 2))
                     continue;
-                this.g[r][c] = this.g[c][r] = true;
+                if (this.g[r][c] || this.g[this.rows - r - 1][this.cols - c - 1])
+                    continue;
+                this.g[r][c] = this.g[this.rows - r - 1][this.cols - c - 1] = true;
                 break;
             }
         }
-        
+
         // 检测连通性
         if (this.check_connectivity(this.rows - 2, 1, 1, this.cols - 2, JSON.parse(JSON.stringify(this.g)))) {
             return true;
@@ -102,8 +147,26 @@ export class GameMap extends GameObject {
         this.ctx.canvas.height = this.L * this.rows;
     }
 
+    check_ready() {
+        for (const snake of this.snakes) {
+            if (snake.status !== 'idle') return false;
+            if (snake.direction == -1) return false;
+        }
+
+        return true;
+    }
+
+    next_step() {
+        for (const snake of this.snakes) {
+            snake.next_step();
+        }
+    }
+
     update() {
         this.update_size();
+        if (this.check_ready()) {
+            this.next_step();
+        }
         this.render();
     }
 
