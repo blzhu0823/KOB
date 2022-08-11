@@ -1,6 +1,5 @@
 import { GameObject } from "./GameObject";
 import { Cell } from "./Cell";
-import { Toast } from "bootstrap";
 
 
 export class Snake extends GameObject {

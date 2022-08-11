@@ -41,7 +41,7 @@ public class UserController {
             return "密码过长，添加用户失败";
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String encodedPassword = passwordEncoder.encode(password);
-        User user = new User(userId, username, encodedPassword);
+        User user = new User(userId, username, encodedPassword, "https://cdn.acwing.com/media/user/profile/photo/116076_lg_613cc9d012.jpg");
         userMapper.insert(user);
 
         return "Add User Successfully";
