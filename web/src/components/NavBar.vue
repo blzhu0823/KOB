@@ -95,9 +95,9 @@ export default {
     const store = useStore();
     const route = useRoute();
     let route_name = computed(() => route.name);
-    
+
     const logout = () => {
-        store.dispatch("logout");
+      store.dispatch("logout");
     };
 
     return {

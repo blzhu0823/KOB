@@ -43,7 +43,6 @@ export class GameMap extends GameObject {
             else if (e.key === 'ArrowRight') snake1.set_direction(1);
             else if (e.key === 'ArrowDown') snake1.set_direction(2);
             else if (e.key === 'ArrowLeft') snake1.set_direction(3);
-            console.log(e);
         });
     }
 

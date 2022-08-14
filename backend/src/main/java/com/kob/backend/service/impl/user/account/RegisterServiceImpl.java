@@ -25,27 +25,27 @@ public class RegisterServiceImpl implements RegisterService {
     @Override
     public Map<String, String> register(String username, String password, String confirmedPassword) {
         Map<String, String> response = new HashMap<>();
-        if(username == null || username.trim().length() == 0)  {
+        if (username == null || username.trim().length() == 0) {
             response.put("error_message", "用户名不能为空");
             return response;
         }
 
-        if(password == null || confirmedPassword == null || password.length() == 0 || confirmedPassword.length() == 0) {
+        if (password == null || confirmedPassword == null || password.length() == 0 || confirmedPassword.length() == 0) {
             response.put("error_message", "密码不能为空");
             return response;
         }
 
-        if(username.trim().length() > 20) {
+        if (username.trim().length() > 20) {
             response.put("error_message", "用户名长度不能大于20");
             return response;
         }
 
-        if(password.length() > 30 || confirmedPassword.length() > 30) {
+        if (password.length() > 30 || confirmedPassword.length() > 30) {
             response.put("error_message", "密码长度不能大于30");
             return response;
         }
 
-        if(!password.equals(confirmedPassword)) {
+        if (!password.equals(confirmedPassword)) {
             response.put("error_message", "两次输入的密码不一致");
             return response;
         }
@@ -54,7 +54,7 @@ public class RegisterServiceImpl implements RegisterService {
         queryWrapper.eq("username", username.trim());
         List<User> users = userMapper.selectList(queryWrapper);
 
-        if(!users.isEmpty()) {
+        if (!users.isEmpty()) {
             response.put("error_message", "用户名已存在");
             return response;
         }

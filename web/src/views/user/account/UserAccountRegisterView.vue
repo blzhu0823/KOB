@@ -69,7 +69,7 @@ export default {
           confirmedPassword: confirmed_password.value,
         },
         success: (resp) => {
-          if (resp.error_message == "success") {
+          if (resp.error_message === "success") {
             router.push({ name: "user_account_login" });
           } else {
             error_message.value = resp.error_message;

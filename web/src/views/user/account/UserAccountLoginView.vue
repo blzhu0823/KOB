@@ -54,7 +54,7 @@ export default {
       store.commit("updateToken", jwt_token);
       store.dispatch("getInfo", {
         success: (resp) => {
-          if (resp.error_message == "success") {
+          if (resp.error_message === "success") {
             router.push({ name: "home" });
             store.commit("updatePullingJwt");
           } else {
@@ -62,9 +62,11 @@ export default {
           }
         },
         error: () => {
-            store.commit("updatePullingJwt");
+          store.commit("updatePullingJwt");
         },
       });
+    } else {
+      store.commit("updatePullingJwt");
     }
 
     const login = () => {
@@ -73,10 +75,10 @@ export default {
         username: username.value,
         password: password.value,
         success: (resp) => {
-          if (resp.error_message == "success") {
+          if (resp.error_message === "success") {
             store.dispatch("getInfo", {
               success: (resp) => {
-                if (resp.error_message == "success") {
+                if (resp.error_message === "success") {
                   router.push({ name: "home" });
                 } else {
                   error_message.value = "用户名或密码错误";
