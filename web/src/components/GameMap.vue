@@ -7,6 +7,7 @@
 <script>
 import { GameMap } from "../assets/scripts/GameMap.js";
 import { ref, onMounted } from "vue";
+import { useStore } from "vuex";
 
 export default {
   setup() {
@@ -14,13 +15,13 @@ export default {
     let canvas = ref(null);
 
     onMounted(() => {
-        new GameMap(canvas.value.getContext('2d'), parent.value);
+      new GameMap(canvas.value.getContext("2d"), parent.value, useStore());
     });
 
     return {
-        canvas,
-        parent,
-    }
+      canvas,
+      parent,
+    };
   },
 };
 </script>

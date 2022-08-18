@@ -36,7 +36,7 @@ export class Snake extends GameObject {
     }
 
     check_tail_increasing() {
-        if (this.step <= 3) {
+        if (this.step <= 10) {
             return true;
         }
 
@@ -97,10 +97,6 @@ export class Snake extends GameObject {
             this.cells[i] = JSON.parse(JSON.stringify(this.cells[i - 1]));
         }
 
-        if (!this.gamemap.check_valid(this.next_cell)) { // 撞墙 or 撞蛇
-            this.status = "die";
-            this.color = "white";
-        }
     }
 
     render() {
