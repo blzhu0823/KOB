@@ -25,10 +25,10 @@ public class MatchPool extends Thread {
     public void setRestTemplate(RestTemplate restTemplate) {
         MatchPool.restTemplate = restTemplate;
     }
-    public void addPlayer(Integer userId, Integer rating) {
+    public void addPlayer(Integer userId, Integer rating, Integer botId) {
         lock.lock();
         try {
-            players.add(new Player(userId, rating, 0));
+            players.add(new Player(userId, rating, botId, 0));
         } finally {
             lock.unlock();
         }
@@ -56,10 +56,12 @@ public class MatchPool extends Thread {
         return ratingDiff <= minWaitingTime * 10;
     }
 
-    private void sendResult(Integer a, Integer b) {
+    private void sendResult(Player a, Player b) {
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
-        data.put("userId1", Collections.singletonList(a.toString()));
-        data.put("userId2", Collections.singletonList(b.toString()));
+        data.put("userId1", Collections.singletonList(a.getUserId().toString()));
+        data.put("userId2", Collections.singletonList(b.getUserId().toString()));
+        data.put("botId1", Collections.singletonList(a.getBotId().toString()));
+        data.put("botId2", Collections.singletonList(b.getBotId().toString()));
         restTemplate.postForObject(startGameUrl, data, String.class);
     }
 
@@ -78,7 +80,7 @@ public class MatchPool extends Thread {
                 if (checkMatched(a, b)) {
                     used[i] = true;
                     used[j] = true;
-                    sendResult(a.getUserId(), b.getUserId());
+                    sendResult(a, b);
                     break;
                 }
             }

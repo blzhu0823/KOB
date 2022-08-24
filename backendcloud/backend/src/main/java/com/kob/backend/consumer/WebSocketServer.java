@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.kob.backend.consumer.utils.JwtAuthentication;
 import com.kob.backend.game.Game;
+import com.kob.backend.mapper.BotMapper;
 import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.User;
@@ -32,20 +33,22 @@ public class WebSocketServer {
     public void setRecordMapper(RecordMapper recordMapper) {
         WebSocketServer.recordMapper = recordMapper;
     }
+
     public static final ConcurrentHashMap<Integer, WebSocketServer> user2WebSocket = new ConcurrentHashMap<>();
     private Session session = null;
     private static UserMapper userMapper;
+
     @Autowired
     public void setUserMapper(UserMapper userMapper) {
         WebSocketServer.userMapper = userMapper;
     }
 
-    private Game game = null;
+    public Game game = null;
 
     private User user = null;
     private boolean hasSendMatch = false;
 
-    private static RestTemplate restTemplate;
+    public static RestTemplate restTemplate;
 
     private static final String addPlayerUrl = "http://127.0.0.1:3001/player/add/";
     private static final String removePlayerUrl = "http://127.0.0.1:3001/player/remove/";
@@ -55,6 +58,12 @@ public class WebSocketServer {
         WebSocketServer.restTemplate = restTemplate;
     }
 
+    public static BotMapper botMapper;
+
+    @Autowired
+    public void setBotMapper(BotMapper botMapper) {
+        WebSocketServer.botMapper = botMapper;
+    }
 
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token) throws IOException {
@@ -85,7 +94,6 @@ public class WebSocketServer {
     }
 
 
-
     @OnMessage
     public void onMessage(String message, Session session) {
         // 从Client接收消息
@@ -93,7 +101,7 @@ public class WebSocketServer {
         System.out.println(data);
         String event = data.getString("event");
         if ("start-matching".equals(event)) {
-            startMatching();
+            startMatching(data.getInteger("botId"));
         } else if ("stop-matching".equals(event)) {
             stopMatching();
         } else if ("move".equals(event)) {
@@ -120,17 +128,21 @@ public class WebSocketServer {
 
     private void move(int direction) {
         if (this.user.getId().equals(this.game.getPlayerA().getId())) {
-            this.game.setNextStepA(direction);
+            if (this.game.getPlayerA().getBotCode() == null) {
+                this.game.setNextStepA(direction);
+            }
         } else {
-            this.game.setNextStepB(direction);
+            if (this.game.getPlayerB().getBotCode() == null) {
+                this.game.setNextStepB(direction);
+            }
         }
     }
 
-    public static void startGame(Integer aId, Integer bId) {
+    public static void startGame(Integer aId, Integer bId, Integer botIdA, Integer botIdB) {
         User a = userMapper.selectById(aId);
         User b = userMapper.selectById(bId);
 
-        Game game = new Game(15, 20, 30, a.getId(), b.getId());
+        Game game = new Game(15, 20, 30, a.getId(), b.getId(), botIdA, botIdB);
         game.createMap();
         game.start();
 
@@ -159,11 +171,12 @@ public class WebSocketServer {
         user2WebSocket.get(b.getId()).sendMessage(respB.toJSONString());
     }
 
-    private void startMatching() {
+    private void startMatching(Integer botId) {
         System.out.println("开始匹配");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.put("userId", Collections.singletonList(this.user.getId().toString()));
         data.put("rating", Collections.singletonList(this.user.getRating().toString()));
+        data.put("botId", Collections.singletonList(botId.toString()));
         hasSendMatch = true;
         restTemplate.postForObject(addPlayerUrl, data, String.class);
     }

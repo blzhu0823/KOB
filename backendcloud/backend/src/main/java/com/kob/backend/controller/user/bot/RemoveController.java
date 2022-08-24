@@ -16,7 +16,7 @@ public class RemoveController {
     private RemoveService removeService;
 
     @PostMapping("/user/bot/remove/")
-    Map<String, String> remove(@RequestParam Map<String, String> data) {
+    public Map<String, String> remove(@RequestParam Map<String, String> data) {
         Integer id = Integer.parseInt(data.get("bot_id"));
         return removeService.remove(id);
     }

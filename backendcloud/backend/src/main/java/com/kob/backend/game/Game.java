@@ -3,11 +3,10 @@ package com.kob.backend.game;
 import com.alibaba.fastjson.JSONObject;
 import com.kob.backend.consumer.WebSocketServer;
 import com.kob.backend.pojo.Record;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Game extends Thread {
@@ -22,6 +21,7 @@ public class Game extends Thread {
     private final Player playerA;
     private final Player playerB;
 
+
     private Integer nextStepA = null;
     private Integer nextStepB = null;
 
@@ -30,13 +30,23 @@ public class Game extends Thread {
     private Integer eye_directionA = -1; // A死后眼睛朝向
     private Integer eye_directionB = -1; // B死后眼睛朝向
 
-    public Game(Integer rows, Integer cols, Integer inner_walls_count, Integer id_a, Integer id_b) {
+    private static final String addBotUrl = "http://127.0.0.1:3002/bot/add/";
+
+    public Game(Integer rows, Integer cols, Integer inner_walls_count, Integer userId1, Integer userId2, Integer botId1, Integer botId2) {
         this.rows = rows;
         this.cols = cols;
         this.inner_walls_count = inner_walls_count;
         this.g = new int[rows][cols];
-        this.playerA = new Player(id_a, rows - 2, 1, new ArrayList<>());
-        this.playerB = new Player(id_b, 1, cols - 2, new ArrayList<>());
+        String botCode1 = null;
+        String botCode2 = null;
+        if (botId1 != -1) {
+            botCode1 = WebSocketServer.botMapper.selectById(botId1).getContent();
+        }
+        if (botId2 != -1) {
+            botCode2 = WebSocketServer.botMapper.selectById(botId2).getContent();
+        }
+        this.playerA = new Player(userId1, botCode1, rows - 2, 1, new ArrayList<>());
+        this.playerB = new Player(userId2, botCode2, 1, cols - 2, new ArrayList<>());
     }
 
 
@@ -135,6 +145,8 @@ public class Game extends Thread {
     }
 
     private boolean nextStep() {
+        sendBotCode(playerA);
+        sendBotCode(playerB);
         for (int i = 0; i < 50; i++) {
             try {
                 Thread.sleep(100);
@@ -145,6 +157,7 @@ public class Game extends Thread {
             lock.lock();
             try {
                 if (this.nextStepA != null && this.nextStepB != null) {
+
                     this.playerA.getSteps().add(this.nextStepA);
                     this.playerB.getSteps().add(this.nextStepB);
                     return true;
@@ -261,21 +274,49 @@ public class Game extends Thread {
         return false;
     }
 
+    private void sendBotCode(Player player) {
+        if (player.getBotCode() == null) {
+            return; // 亲自出马
+        }
+
+        Player me, you;
+        if (player.getId().equals(this.playerA.getId())) {
+            me = this.playerA;
+            you = this.playerB;
+        } else {
+            me = this.playerB;
+            you = this.playerA;
+        }
+
+        MultiValueMap<String, String> data = new LinkedMultiValueMap();
+        String game = mapToString() + "#" +
+                me.getSx() + "#" +
+                me.getSy() + "#(" +
+                me.getStepString() + ")#" +
+                you.getSx() + "#" +
+                you.getSy() + "#(" +
+                you.getStepString() + ")";
+        data.put("userId", Collections.singletonList(player.getId().toString()));
+        data.put("botCode", Collections.singletonList(player.getBotCode()));
+        data.put("game", Collections.singletonList(game));
+        WebSocketServer.restTemplate.postForObject(addBotUrl, data, String.class);
+    }
+
     @Override
     public void run() {
         while (nextStep()) {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
             if (judge()) {
                 sendResult();
                 return;
             }
 
             sendMove();
-
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
 
         lock.lock();

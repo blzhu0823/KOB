@@ -78,7 +78,7 @@ export class Snake extends GameObject {
 
 
     update() {
-        if (this.status == "move") {
+        if (this.status === "move") {
             this.move();
         }
         this.render();

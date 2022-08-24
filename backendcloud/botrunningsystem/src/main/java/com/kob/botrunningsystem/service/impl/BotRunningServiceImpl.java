@@ -1,0 +1,18 @@
+package com.kob.botrunningsystem.service.impl;
+
+import com.kob.botrunningsystem.service.BotRunningService;
+import com.kob.botrunningsystem.utils.BotPool;
+import org.springframework.stereotype.Service;
+
+
+@Service
+public class BotRunningServiceImpl implements BotRunningService {
+
+    public static final BotPool botPool = new BotPool();
+    @Override
+    public String addBot(Integer userId, String botCode, String game) {
+        botPool.addBot(userId, botCode, game);
+        return "success";
+    }
+
+}

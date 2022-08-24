@@ -16,6 +16,7 @@ import java.util.List;
 
 public class Player {
     private Integer id;
+    private String botCode;
     private Integer sx;
     private Integer sy;
     private List<Integer> steps;
